@@ -9,7 +9,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
-
+using System.Net.Http;
 
 namespace HtmlParserProgram
 {
@@ -18,20 +18,50 @@ namespace HtmlParserProgram
         static void Main(string[] args)
         {
 
-            WebClient client1 = new WebClient();
-            //File.Delete("C://Users//g.stavrou//Downloads//test.html");
-            //client1.DownloadString("https://www.pamestoixima.gr/EN/1/sports", "C://Users//g.stavrou//Downloads//testAfterDL.html");
-            //client1.DownloadFile("https://www.pamestoixima.gr/EN/1/sports", "C://Users//g.stavrou//Downloads//testAfterDL.html");
+            //GetData();
 
+            //WebClient client1 = new WebClient();
+            //client1.DownloadFile("http://www.nzherald.co.nz/", "C://Users//g.stavrou//Downloads//tes111t.html");
+
+            //! Go to Home Page
             IWebDriver driver1 = new ChromeDriver(@"C:\Users\g.stavrou\Source\Repos\HtmlParserProgram\HtmlParserProgram\bin\Debug\netcoreapp2.1");
-            driver1.Navigate().GoToUrl("https://www.pamestoixima.gr/EN/1/sports#bo-navigation=16405.1&action=market-group-list&dynamic=17099.1");
-            string t = driver1.PageSource;
+            driver1.Navigate().GoToUrl("https://www.pamestoixima.gr/EN/1/sports#action=sports");
             System.Threading.Thread.Sleep(4000);
-            IJavaScriptExecutor js = (IJavaScriptExecutor)driver1;
-            string title = (string)js.ExecuteScript("return document.body.innerHTML");
-            string title1 = (string)js.ExecuteScript("return document.body.innerText");
-            
-            driver1.FindElement(By.CssSelector("body")).Click();
+            //! Get HTML Code
+            string pageSource =  driver1.PageSource;
+
+            //! Parse HTML
+            HttpClient client = new HttpClient();
+            HtmlDocument pageDocument = new HtmlDocument();
+            pageDocument = ParseHtmlPageSource(pageSource);
+            HtmlNodeCollection htmlNodeCollection = FindSpecificElements(pageDocument , "(//ul[contains(@class,'nodes')])");
+            foreach(HtmlNode node in htmlNodeCollection)
+            {
+                Console.WriteLine(IterateThroughHtmlNodes(node));
+
+                if(node.ChildNodes.Count > 0)
+                {
+                    foreach(HtmlNode childNode in node.ChildNodes)
+                    {
+                        if (childNode.Name.Equals("li"))
+                        {
+                            Console.WriteLine(node.Name);
+                            HtmlAttributeCollection nodeAttributeCollection = childNode.Attributes;
+                            foreach(HtmlAttribute attribute in nodeAttributeCollection)
+                            {
+                                Console.WriteLine(attribute.Value);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            //IJavaScriptExecutor js = (IJavaScriptExecutor)driver1;
+            //string title = (string)js.ExecuteScript("return document.body.innerHTML");
+            //string title1 = (string)js.ExecuteScript("return document.body.innerText");
+
+            driver1.FindElement(By.CssSelector("dynamic-root")).Click();
             //    SendKeys(Keys.Control + "S" + Keys.Control);
             System.Threading.Thread.Sleep(2000);
 
@@ -45,26 +75,17 @@ namespace HtmlParserProgram
                   .Build()
                   .Perform();
 
-            //string source = Clipboard.GetText(TextDataFormat.UnicodeText);
-            //File.WriteAllText(@"PathToSaveTheSource", source);
-            //
             System.Threading.Thread.Sleep(10000);
-            //client1.DownloadFile("http://www.nzherald.co.nz/", "C://Users//g.stavrou//Downloads//tes111t.html");
-            //string path = File.ReadAllText("C://Users//g.stavrou//Downloads//tes111t.html");
-            string path = File.ReadAllText("C://Users//g.stavrou//Downloads//test.html");
 
             //! Download Page and parse it to HtmlDocument
-            HttpClient client = new HttpClient();
-            HtmlDocument pageDocument = new HtmlDocument();
-            //pageDocument.LoadHtml(path);
-            pageDocument.LoadHtml(title);
+            
 
-            var headlineTextDiv = pageDocument.DocumentNode.SelectNodes("(//div[contains(@id,'DynamicContentComponent31-group-48823.1')])");
+            HtmlNodeCollection headlineTextDiv = pageDocument.DocumentNode.SelectNodes("(//div[contains(@id,'DynamicContentComponent31-group-48823.1')])");
             foreach (HtmlNode node in headlineTextDiv)
             {
                 Console.WriteLine(node.OuterHtml);
             }
-                //! Find All Matches
+            //! Find All Matches
             var headlineText = pageDocument.DocumentNode.SelectNodes("(//span[contains(@behavior.id,'ShowEvent')])");
             foreach (HtmlNode node in headlineText)
             {
@@ -84,8 +105,8 @@ namespace HtmlParserProgram
                     {
                         IWebDriver driver2 = new ChromeDriver();
                         driver2.Navigate().GoToUrl("https://www.pamestoixima.gr/EN/1/sports#bo-navigation=16405.1&action=market-group-list&dynamic=17099.1");
-                        string pageSource = driver2.PageSource;
-                        Console.WriteLine(pageSource);
+                        //string pageSource = driver2.PageSource;
+                        //Console.WriteLine(pageSource);
                         Console.Read();
 
                     }
@@ -124,6 +145,32 @@ namespace HtmlParserProgram
             //MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
+        private static HtmlDocument ParseHtmlPageSource(string pageSource)
+        {
+            HttpClient client = new HttpClient();
+            HtmlDocument pageDocument = new HtmlDocument();
+            pageDocument.LoadHtml(pageSource);
+
+            return pageDocument;
+        }
+
+        private static HtmlNodeCollection FindSpecificElements(HtmlDocument pageDocument, string XPath)
+        {
+            HtmlNodeCollection htmlNodeCollections = new HtmlNodeCollection(null);
+            htmlNodeCollections = pageDocument.DocumentNode.SelectNodes(XPath);
+            
+            return htmlNodeCollections;
+        }
+
+        private static string IterateThroughHtmlNodes(HtmlNode element)
+        {
+            HtmlNode node = null;
+            node = element;
+
+            return node.OuterHtml;
+        }
+
+
         async static Task MainAsync(string[] args)
         {
             HttpClient client = new HttpClient();
@@ -134,6 +181,28 @@ namespace HtmlParserProgram
             var headlineText = pageDocument.DocumentNode.SelectSingleNode("(//div[contains(@class,'pb-f-homepage-hero')]//h3)[1]").InnerText;
             Console.WriteLine(headlineText);
             Console.ReadLine();
+        }
+
+        async static void GetData()
+        {
+            //We will make a GET request to a really cool website...
+
+            string baseUrl = "https://www.pamestoixima.gr/EN/1/sports#bo-navigation=16405.1&action=market-group-list&dynamic=16815.1";
+            //The 'using' will help to prevent memory leaks.
+            //Create a new instance of HttpClient
+            using (HttpClient client = new HttpClient())
+
+            //Setting up the response...         
+
+            using (HttpResponseMessage res = await client.GetAsync(baseUrl))
+            using (HttpContent content = res.Content)
+            {
+                string data = await content.ReadAsStringAsync();
+                if (data != null)
+                {
+                    Console.WriteLine(data);
+                }
+            }
         }
     }
 }
