@@ -10,12 +10,7 @@
     <PackageReference Include="Selenium.Support" Version="3.14.0" />
     <PackageReference Include="Selenium.WebDriver" Version="3.14.0" />
     <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="2.41.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="UnitTestProject1">
-      <HintPath>..\UnitTestProject1\obj\Debug\UnitTestProject1.dll</HintPath>
-    </Reference>
+    <PackageReference Include="System.Data.SqlClient" Version="4.5.1" />
   </ItemGroup>
 
 </Project>
