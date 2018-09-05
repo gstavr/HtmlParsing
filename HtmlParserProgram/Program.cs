@@ -27,21 +27,24 @@ namespace HtmlParserProgram
 
             //! Go to Home Page Pame Stoi
             IWebDriver driver1 = new ChromeDriver(@"C:\Users\g.stavrou\Source\Repos\HtmlParserProgram\HtmlParserProgram\bin\Debug\netcoreapp2.1");
+            
+            PameStoixima pameStoixima = new PameStoixima("https://www.pamestoixima.gr/EN/1/sports#action=sports", driver1);
+            string companyUrl = string.Empty;
             DataBase cmp = new DataBase();
 
-            string companyUrl = string.Empty;
-            foreach(DataRow row in cmp.companiesDataTable.Rows)
-            {
-                string company = row["Descr"].ToString();
+            //foreach (DataRow row in cmp.companiesDataTable.Rows)
+            //{
+            //    string company = row["Descr"].ToString();
 
-                switch (company)
-                {
-                    case "OPAP":
-                        PameStoixima pameStoixima = new PameStoixima(row["Link"].ToString() , driver1);
-                        companyUrl = pameStoixima.url;
-                        break;
-                }
-            }
+            //    switch (company)
+            //    {
+            //        case "OPAP":
+            //            //PameStoixima pameStoixima = new PameStoixima(row["Link"].ToString() , driver1);
+            //            PameStoixima pameStoixima = new PameStoixima("https://www.pamestoixima.gr/EN/1/sports#action=sports", driver1);
+            //            companyUrl = pameStoixima.url;
+            //            break;
+            //    }
+            //}
             
 
             

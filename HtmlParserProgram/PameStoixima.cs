@@ -102,9 +102,9 @@ namespace HtmlParserProgram
                                     //! Find Li Input and Spanm
                                     if(childNode2.ChildNodes.Count > 0)
                                     {
-                                        foreach(HtmlNode childNode3 in ul.ChildNodes)
+                                        foreach(HtmlNode childNode3 in childNode2.ChildNodes)
                                         {
-                                            if (childNode3.Name.Equals("input"))
+                                            if (childNode3.Name.Equals("span"))
                                             {
                                                 HtmlAttributeCollection nodeAttributeCollection = childNode3.Attributes;
                                             }
