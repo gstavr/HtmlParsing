@@ -12,7 +12,8 @@ using System.Xml;
 using System.Net.Http;
 using System.Collections.Generic;
 using System.Data;
-
+using HtmlParserProgram.Models;
+using System.Linq;
 namespace HtmlParserProgram
 {
     class Program
@@ -24,6 +25,8 @@ namespace HtmlParserProgram
 
             //WebClient client1 = new WebClient();
             //client1.DownloadFile("http://www.nzherald.co.nz/", "C://Users//g.stavrou//Downloads//tes111t.html");
+            
+            
 
             //! Go to Home Page Pame Stoi
             IWebDriver driver1 = new ChromeDriver(@"C:\Users\g.stavrou\Source\Repos\HtmlParserProgram\HtmlParserProgram\bin\Debug\netcoreapp2.1");
@@ -95,6 +98,11 @@ namespace HtmlParserProgram
 
             //Console.WriteLine(pageDocument.DocumentNode.InnerHtml);
             //MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
+
+            //using (var context = new OddsContext())
+            //{
+            //    Companies cmp1 = context.Companies.FirstOrDefault(x => x.Id == 1);
+            //}
         }
 
         #region Not Used

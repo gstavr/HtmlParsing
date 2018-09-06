@@ -17,6 +17,9 @@ using System.Xml;
 using System.Net.Http;
 using System.Collections.Generic;
 using System.Data;
+using HtmlParserProgram.Models;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace HtmlParserProgram
 {
@@ -27,6 +30,7 @@ namespace HtmlParserProgram
         public string url = "https://www.pamestoixima.gr/EN/1/sports#action=sports";
         public IWebDriver driver1 = null;
         public GeneralMethods generalMethods = new GeneralMethods();
+        public DataBase _dataBase = new DataBase();
         public PameStoixima(string _pageUrl , IWebDriver _driver1)
         {
             this.url = _pageUrl;
@@ -61,13 +65,13 @@ namespace HtmlParserProgram
                 {
                     foreach (HtmlNode childNode in node.ChildNodes)
                     {
-                        if (childNode.Name.Equals("li") && childNode.InnerHtml.Contains("Football"))
+                        if (childNode.Name.Equals("li") && childNode.InnerText.Equals("Football"))
                         {
                             //! Find Football Link and Get ID
                             HtmlAttributeCollection nodeAttributeCollection = childNode.Attributes;
                             foreach (HtmlAttribute attribute in nodeAttributeCollection)
                             {
-
+                                Console.WriteLine(childNode.InnerHtml);
                                 if (attribute.Name.Equals("id") && attribute.Value.Contains("DynamicRootComponent"))
                                 {   
                                     IWebElement li = driver1.FindElement(By.Id(attribute.Value));
@@ -82,7 +86,7 @@ namespace HtmlParserProgram
             }
 
             //! Get Competition Page and Fill
-            generalMethods.setTimeOut(4);
+            generalMethods.setTimeOut(6);
             pageSource = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");  
             htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pageSource), "(//div[contains(@id,'DynamicContentComponent31-menu')])");
             HtmlNode runningNode = null;
@@ -107,8 +111,32 @@ namespace HtmlParserProgram
                                             if (childNode3.Name.Equals("span"))
                                             {
                                                 HtmlAttributeCollection nodeAttributeCollection = childNode3.Attributes;
+
+                                                Competition competitionTest = new OddsContext().Competition.FirstOrDefault(x => x.Descr.Equals(childNode3.InnerText));
+                                                using (OddsContext context = new OddsContext())
+                                                {
+
+                                                    Competition competition = context.Competition.FirstOrDefault(x => x.Descr.Equals(childNode3.InnerText));
+
+                                                    if(competition == default(Competition))
+                                                    {
+                                                        competition = new Competition();
+                                                        context.Competition.Add(competition);
+                                                        context.Database.CloseConnection();
+                                                        competition.Id = _dataBase.X_getGID("Competition");
+                                                        context.Database.OpenConnection();
+                                                        competition.Id = Convert.ToInt32(nodeAttributeCollection["behavior.gotoleague.idfwbonavigation"].Value.Replace(".", ""));
+                                                    }
+                                                    
+                                                    competition.SportId = 1;
+                                                    competition.Descr = childNode3.InnerText;
+                                                    competition.DynamicId = nodeAttributeCollection["behavior.gotoleague.idfwbonavigation"].Value;
+                                                    
+                                                    context.SaveChanges();
+                                                }
                                             }
                                         }
+                                        
                                     }
 
                                     //Console.WriteLine(childNode2.InnerHtml);
