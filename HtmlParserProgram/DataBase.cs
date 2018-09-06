@@ -8,7 +8,7 @@ namespace HtmlParserProgram
 {
     class DataBase
     {
-
+        // Scaffold-DbContext "Server=DEV-STAVROU\SQLEXPRESS;Database=Odds;Trusted_Connection=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models
         public DataTable companiesDataTable = new DataTable();
         public string _connString = string.Format("Data Source=DEV-STAVROU\\SQLEXPRESS;Initial Catalog=Odds;Integrated Security=True;MultipleActiveResultSets=true");// string.Format("Data Source=ANL-PAPASTERGIO; Initial Catalog = Odds; User Id = sa; Password = epsilonsa;");
         
