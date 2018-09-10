@@ -67,6 +67,27 @@ namespace HtmlParserProgram
                     {
                         if (childNode.Name.Equals("li") && childNode.InnerText.Equals("Football"))
                         {
+
+                            foreach(HtmlNode aref in childNode.ChildNodes)
+                            {
+                                if(aref.Name == "a")
+                                {
+                                    if (!string.IsNullOrWhiteSpace(aref.Attributes["behavior.node.id"].Value)){
+                                        using (OddsContext context = new OddsContext())
+                                        {
+
+                                            Companies companyFootball = context.Companies.FirstOrDefault(x => x.Link.Equals(this.url));
+
+                                            if (companyFootball != default(Companies))
+                                            {
+                                                companyFootball.DynamicParam = aref.Attributes["behavior.node.id"].Value;
+                                            }
+                                            context.SaveChanges();
+                                        }
+                                    }
+                                }
+                            }
+
                             //! Find Football Link and Get ID
                             HtmlAttributeCollection nodeAttributeCollection = childNode.Attributes;
                             foreach (HtmlAttribute attribute in nodeAttributeCollection)
@@ -112,7 +133,6 @@ namespace HtmlParserProgram
                                             {
                                                 HtmlAttributeCollection nodeAttributeCollection = childNode3.Attributes;
 
-                                                Competition competitionTest = new OddsContext().Competition.FirstOrDefault(x => x.Descr.Equals(childNode3.InnerText));
                                                 using (OddsContext context = new OddsContext())
                                                 {
 
@@ -125,7 +145,6 @@ namespace HtmlParserProgram
                                                         context.Database.CloseConnection();
                                                         competition.Id = _dataBase.X_getGID("Competition");
                                                         context.Database.OpenConnection();
-                                                        competition.Id = Convert.ToInt32(nodeAttributeCollection["behavior.gotoleague.idfwbonavigation"].Value.Replace(".", ""));
                                                     }
                                                     
                                                     competition.SportId = 1;
@@ -136,10 +155,7 @@ namespace HtmlParserProgram
                                                 }
                                             }
                                         }
-                                        
                                     }
-
-                                    //Console.WriteLine(childNode2.InnerHtml);
                                 }
                             }
                             //IWebElement li = driver1.FindElement(By.Id(attribute.Value));
@@ -150,6 +166,38 @@ namespace HtmlParserProgram
 
             }
 
+            generalMethods.setTimeOut(2);
+            //! Fill For Each Competition the Games
+            
+            
+            using (OddsContext context = new OddsContext())
+            {
+
+                List<Competition> companyFootball = context.Competition.ToList();
+
+                string CompetitionURL = this.driver1.Url;
+                foreach (Competition comp in companyFootball)
+                {
+                    //! Go to Game URL (DYNAMIC)
+                    if (!string.IsNullOrWhiteSpace(comp.DynamicId))
+                    {
+                        IWebElement liList = driver1.FindElement(By.XPath(string.Format("//span[contains(@behavior.gotoleague.idfwbonavigation, '{0}')]", comp.DynamicId)));
+                        liList.Click();
+                        //string gameURl = string.Format(CompetitionURL + "&dynamic={0}", comp.DynamicId);
+                        //this.driver1.Navigate().GoToUrl(this.url);
+                        generalMethods.setTimeOut(4);
+                        string pgData = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");
+
+                        htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pgData), "(//div[contains(@id,'DynamicContentComponent31-groups')])");
+                        runningNode = null;
+                        HtmlDocument pageDocumentTable = new HtmlDocument();
+                        pageDocumentTable = generalMethods.ParseHtmlPageSource(htmlNodeCollection[0].OuterHtml);
+                        HtmlNodeCollection htmlNodeCollection1 = generalMethods.FindSpecificElements(pageDocumentTable, "(//table)");
+                    }
+                }
+
+                context.SaveChanges();
+            }
         }
 
     }
