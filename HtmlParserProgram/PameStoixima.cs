@@ -41,7 +41,7 @@ namespace HtmlParserProgram
         private void ParsePageData()
         {
             this.driver1.Navigate().GoToUrl(this.url);
-            generalMethods.setTimeOut(4);
+            generalMethods.setTimeOut(2);
             TimeSpan tm = new TimeSpan(0, 0, 8);
             driver1.Manage().Timeouts().ImplicitWait = tm;
 
@@ -107,7 +107,7 @@ namespace HtmlParserProgram
             }
 
             //! Get Competition Page and Fill
-            generalMethods.setTimeOut(6);
+            generalMethods.setTimeOut(4);
             pageSource = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");  
             htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pageSource), "(//div[contains(@id,'DynamicContentComponent31-menu')])");
             HtmlNode runningNode = null;
@@ -178,6 +178,7 @@ namespace HtmlParserProgram
                 string CompetitionURL = this.driver1.Url;
                 foreach (Competition comp in companyFootball)
                 {
+                    generalMethods.setTimeOut(2);
                     //! Go to Game URL (DYNAMIC)
                     if (!string.IsNullOrWhiteSpace(comp.DynamicId))
                     {
@@ -185,7 +186,7 @@ namespace HtmlParserProgram
                         liList.Click();
                         //string gameURl = string.Format(CompetitionURL + "&dynamic={0}", comp.DynamicId);
                         //this.driver1.Navigate().GoToUrl(this.url);
-                        generalMethods.setTimeOut(4);
+                        generalMethods.setTimeOut(2);
                         string pgData = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");
 
                         htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pgData), "(//div[contains(@id,'DynamicContentComponent31-groups')])");
@@ -193,9 +194,70 @@ namespace HtmlParserProgram
                         HtmlDocument pageDocumentTable = new HtmlDocument();
                         pageDocumentTable = generalMethods.ParseHtmlPageSource(htmlNodeCollection[0].OuterHtml);
                         HtmlNodeCollection htmlNodeCollection1 = generalMethods.FindSpecificElements(pageDocumentTable, "(//table)");
+
+                        foreach(HtmlNode collection in htmlNodeCollection1)
+                        {
+                            if(collection.ChildNodes.Count > 0)
+                            {
+                                foreach(HtmlNode childNode in collection.ChildNodes)
+                                {
+                                    if(childNode.Name.Equals("tbody"))
+                                    {
+
+                                        if(childNode.ChildNodes.Count > 0)
+                                        {
+                                            foreach(HtmlNode tr in childNode.ChildNodes)
+                                            {
+                                                // For Every Tr in tbody
+                                                if (tr.Name.Equals("tr") && tr.ChildNodes.Count > 0)
+                                                {
+
+                                                    Game game = new Game();
+                                                    game.CompetitionId = comp.Id;
+                                                    foreach (HtmlNode td in tr.ChildNodes)
+                                                    {
+                                                        if (td.HasClass("eventname"))
+                                                        {
+                                                            string date = td.FirstChild.FirstChild.FirstChild.InnerText;
+                                                            string time = td.FirstChild.FirstChild.LastChild.InnerText;
+
+                                                            string MatchHomeTeam = td.LastChild.FirstChild.FirstChild.InnerText;
+                                                            string AwayTeam = td.LastChild.LastChild.LastChild.InnerText;
+
+                                                            game.Descr = string.Format("{0} - {1}", MatchHomeTeam, AwayTeam);
+                                                            game.HomeTeam = MatchHomeTeam;
+                                                            game.AwayTeam = AwayTeam;
+                                                            game.MatchDate = new DateTime(DateTime.Now.Year, Convert.ToInt32(date.Split('/')[1]), Convert.ToInt32(date.Split('/')[0]), Convert.ToInt32(time.Split(':')[0]), Convert.ToInt32(time.Split(':')[1]), 0);
+                                                        }
+                                                    }
+
+                                                    Game checkIfGameExists = context.Game.FirstOrDefault(x => x.CompetitionId == game.CompetitionId && x.MatchDate == game.MatchDate && x.HomeTeam.Equals(game.HomeTeam) && x.AwayTeam.Equals(game.AwayTeam));
+                                                    if (checkIfGameExists == default(Game))
+                                                    {
+                                                        game.Id = _dataBase.X_getGID("Game");
+                                                        context.Game.Add(game);
+                                                    }
+                                                    else
+                                                    {
+                                                        checkIfGameExists = game;
+                                                    }
+
+                                                    context.SaveChanges();
+                                                }
+                                            }
+                                        }
+
+
+                                        
+                                    }
+                                }
+                            }
+                        }
+
+                        driver1.Navigate().Back();
+
                     }
                 }
-
                 context.SaveChanges();
             }
         }
