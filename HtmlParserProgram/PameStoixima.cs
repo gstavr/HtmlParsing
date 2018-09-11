@@ -243,6 +243,15 @@ namespace HtmlParserProgram
                                                     }
 
                                                     context.SaveChanges();
+
+                                                    string getXPath = tr.LastChild.FirstChild.XPath;
+                                                    string behaviorID = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Value;
+                                                    string behaviorName = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Name;
+                                                    IWebElement moreBetsPage = driver1.FindElement(By.XPath(string.Format("//span[contains(@{1}, '{0}')]", behaviorID , behaviorName)));
+                                                    //liList.Click();
+                                                    generalMethods.setTimeOut(2);
+
+                                                    //driver1.Navigate().Back();
                                                 }
                                             }
                                         }
