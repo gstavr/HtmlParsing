@@ -54,8 +54,13 @@ namespace HtmlParserProgram
             HttpClient client = new HttpClient();
             HtmlDocument pageDocument = new HtmlDocument();
             pageDocument = generalMethods.ParseHtmlPageSource(pageSource);
-            HtmlNodeCollection htmlNodeCollection = generalMethods.FindSpecificElements(pageDocument, "(//ul[contains(@class,'nodes')])");
+            HtmlNodeCollection htmlNodeCollection = null;
             
+            while(htmlNodeCollection == null)
+            {
+                htmlNodeCollection = generalMethods.FindSpecificElements(pageDocument, "(//ul[contains(@class,'nodes')])");
+            }
+
             //! Find FootBall Tab From HomePage
             foreach (HtmlNode node in htmlNodeCollection)
             {
@@ -107,9 +112,14 @@ namespace HtmlParserProgram
             }
 
             //! Get Competition Page and Fill
-            generalMethods.setTimeOut(4);
-            pageSource = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");  
-            htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pageSource), "(//div[contains(@id,'DynamicContentComponent31-menu')])");
+            //generalMethods.setTimeOut(4);
+            htmlNodeCollection = null;
+
+            while(htmlNodeCollection == null)
+            {
+                pageSource = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");
+                htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pageSource), "(//div[contains(@id,'DynamicContentComponent31-menu')])");
+            }
             HtmlNode runningNode = null;
             foreach (HtmlNode node in htmlNodeCollection)
             {
@@ -166,7 +176,7 @@ namespace HtmlParserProgram
 
             }
 
-            generalMethods.setTimeOut(2);
+            //generalMethods.setTimeOut(2);
             //! Fill For Each Competition the Games
             
             
@@ -178,7 +188,7 @@ namespace HtmlParserProgram
                 string CompetitionURL = this.driver1.Url;
                 foreach (Competition comp in companyFootball)
                 {
-                    generalMethods.setTimeOut(2);
+                    //generalMethods.setTimeOut(2);
                     //! Go to Game URL (DYNAMIC)
                     if (!string.IsNullOrWhiteSpace(comp.DynamicId))
                     {
@@ -186,14 +196,23 @@ namespace HtmlParserProgram
                         liList.Click();
                         //string gameURl = string.Format(CompetitionURL + "&dynamic={0}", comp.DynamicId);
                         //this.driver1.Navigate().GoToUrl(this.url);
-                        generalMethods.setTimeOut(2);
-                        string pgData = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");
+                        //generalMethods.setTimeOut(2);
 
-                        htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pgData), "(//div[contains(@id,'DynamicContentComponent31-groups')])");
+                        htmlNodeCollection = null;
+                        while(htmlNodeCollection == null)
+                        {
+                            string pgData = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");
+                            htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pgData), "(//div[contains(@id,'DynamicContentComponent31-groups')])");
+                        }
+
                         runningNode = null;
                         HtmlDocument pageDocumentTable = new HtmlDocument();
-                        pageDocumentTable = generalMethods.ParseHtmlPageSource(htmlNodeCollection[0].OuterHtml);
-                        HtmlNodeCollection htmlNodeCollection1 = generalMethods.FindSpecificElements(pageDocumentTable, "(//table)");
+                        HtmlNodeCollection htmlNodeCollection1 = null;
+                        while(htmlNodeCollection1 == null)
+                        {
+                            pageDocumentTable = generalMethods.ParseHtmlPageSource(htmlNodeCollection[0].OuterHtml);
+                            htmlNodeCollection1 = generalMethods.FindSpecificElements(pageDocumentTable, "(//table)");
+                        }
 
                         foreach(HtmlNode collection in htmlNodeCollection1)
                         {
@@ -242,32 +261,74 @@ namespace HtmlParserProgram
                                                         checkIfGameExists = game;
                                                     }
 
-                                                    context.SaveChanges();
-
-                                                    string getXPath = tr.LastChild.FirstChild.XPath;
                                                     string behaviorID = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Value;
                                                     string behaviorName = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Name;
-                                                    IWebElement moreBetsPage = driver1.FindElement(By.XPath(string.Format("//span[contains(@{1}, '{0}')]", behaviorID , behaviorName)));
-                                                    //liList.Click();
-                                                    generalMethods.setTimeOut(2);
 
-                                                    //driver1.Navigate().Back();
+                                                    game.DynamicId = behaviorID;
+                                                    context.SaveChanges();
+
+                                                    IWebElement moreBetsPage = driver1.FindElement(By.XPath(string.Format("//span[@{1}='{0}' and @behavior.id ='More' and @title='More bets']", behaviorID, behaviorName)));
+                                                    moreBetsPage.Click();
+                                                    
+                                                    Fill_GamePick(moreBetsPage, game);
+
+                                                    driver1.Navigate().Back();
                                                 }
                                             }
                                         }
-
-
-                                        
                                     }
                                 }
                             }
                         }
 
                         driver1.Navigate().Back();
-
                     }
                 }
                 context.SaveChanges();
+            }
+        }
+
+        private void Fill_GamePick(IWebElement moreBetsPage, Game game)
+        {   
+            HtmlNodeCollection htmlNodeCollection = null;
+
+            while(htmlNodeCollection == null)
+            {
+                string pgData = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");
+                htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pgData), string.Format("(//div[@id='MarketListContentComponent32-event-{0}-group-1'])", game.DynamicId));
+            }
+
+            if(htmlNodeCollection != null && htmlNodeCollection.Count > 0)
+            {
+                if(htmlNodeCollection[0].ChildNodes.Count > 0 && htmlNodeCollection[0].ChildNodes.Count == 1)
+                {
+
+                    // \"toggler\" 
+                    foreach (HtmlNode gamePick in htmlNodeCollection[0].ChildNodes[0].ChildNodes)
+                    {
+
+                        if(gamePick.ChildNodes.Count > 0)
+                        {
+                            if(gamePick.ChildNodes[0].ChildNodes.Count > 0)
+                            {
+                                // Foreach \"market\" class 
+                                foreach (HtmlNode market in gamePick.ChildNodes[0].ChildNodes)
+                                {
+                                    if (market.Name.Equals("h2"))
+                                    {
+                                        string GamePickDescr = market.FirstChild.InnerText;
+                                    }
+
+                                    if(market.Name.Equals("table"))
+
+                                    string te = market.InnerHtml;
+                                }
+                            }
+                        }
+
+                        string t = gamePick.Name;
+                    }
+                }
             }
         }
 
