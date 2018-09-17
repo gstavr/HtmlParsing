@@ -17,6 +17,7 @@ namespace HtmlParserProgram.Models
         public string AwayTeam { get; set; }
         public DateTime? MatchDate { get; set; }
         public string DynamicId { get; set; }
+        public DateTime? DateUpdated { get; set; }
 
         public Competition Competition { get; set; }
         public ICollection<GamePick> GamePick { get; set; }

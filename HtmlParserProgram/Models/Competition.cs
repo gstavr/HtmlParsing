@@ -16,6 +16,8 @@ namespace HtmlParserProgram.Models
         public string Descr { get; set; }
         public string AlternativeDescr { get; set; }
         public string DynamicId { get; set; }
+        public DateTime? DateUpdated { get; set; }
+        public short? IsValid { get; set; }
 
         public GroupCompetition Group { get; set; }
         public Sport Sport { get; set; }

@@ -156,7 +156,9 @@ namespace HtmlParserProgram
                                                         competition.Id = _dataBase.X_getGID("Competition");
                                                         context.Database.OpenConnection();
                                                     }
-                                                    
+
+                                                    competition.DateUpdated = DateTime.Now;
+                                                    competition.IsValid = 1;
                                                     competition.SportId = 1;
                                                     competition.Descr = childNode3.InnerText;
                                                     competition.DynamicId = nodeAttributeCollection["behavior.gotoleague.idfwbonavigation"].Value;
@@ -183,7 +185,7 @@ namespace HtmlParserProgram
             using (OddsContext context = new OddsContext())
             {
 
-                List<Competition> companyFootball = context.Competition.ToList();
+                List<Competition> companyFootball = context.Competition.Where(x => x.IsValid == 1 && x.DateUpdated > DateTime.Now.AddHours(-2)).ToList();
 
                 string CompetitionURL = this.driver1.Url;
                 foreach (Competition comp in companyFootball)
@@ -233,6 +235,7 @@ namespace HtmlParserProgram
 
                                                     Game game = new Game();
                                                     game.CompetitionId = comp.Id;
+                                                    game.DateUpdated = DateTime.Now;
                                                     foreach (HtmlNode td in tr.ChildNodes)
                                                     {
                                                         if (td.HasClass("eventname"))
@@ -314,14 +317,15 @@ namespace HtmlParserProgram
                                 // Foreach \"market\" class 
                                 foreach (HtmlNode market in gamePick.ChildNodes[0].ChildNodes)
                                 {
+                                    HtmlNode lastNode = findLastChildNode(market);
                                     if (market.Name.Equals("h2"))
                                     {
                                         string GamePickDescr = market.FirstChild.InnerText;
                                     }
 
-                                    if(market.Name.Equals("table"))
+                                    if (market.Name.Equals("table")) ;
 
-                                    string te = market.InnerHtml;
+                                    //string te = market.InnerHtml;
                                 }
                             }
                         }
@@ -330,6 +334,25 @@ namespace HtmlParserProgram
                     }
                 }
             }
+        }
+
+        private HtmlNode findLastChildNode(HtmlNode node)
+        {
+            HtmlNode returnedNode = null;
+
+            if(node.ChildNodes.Count > 0)
+            {
+                foreach(HtmlNode nodeInner in node.ChildNodes)
+                {
+                    findLastChildNode(nodeInner);
+                }
+            }
+            else
+            {
+                returnedNode = node;
+            }
+
+            return returnedNode;
         }
 
     }

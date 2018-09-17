@@ -31,7 +31,7 @@ namespace HtmlParserProgram.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Server=DEV-STAVROU\\SQLEXPRESS;Database=Odds;Trusted_Connection=True;");
+                optionsBuilder.UseSqlServer("Server=GINOS\\SQLEXPRESS03;Database=Odds;Trusted_Connection=True;");
             }
         }
 
@@ -55,6 +55,8 @@ namespace HtmlParserProgram.Models
                     .ValueGeneratedNever();
 
                 entity.Property(e => e.AlternativeDescr).HasMaxLength(255);
+
+                entity.Property(e => e.DateUpdated).HasColumnType("date");
 
                 entity.Property(e => e.Descr).HasMaxLength(255);
 
@@ -86,6 +88,8 @@ namespace HtmlParserProgram.Models
                 entity.Property(e => e.AwayTeam).HasMaxLength(255);
 
                 entity.Property(e => e.CompetitionId).HasColumnName("CompetitionID");
+
+                entity.Property(e => e.DateUpdated).HasColumnType("date");
 
                 entity.Property(e => e.Descr).HasMaxLength(255);
 

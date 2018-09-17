@@ -29,7 +29,7 @@ namespace HtmlParserProgram
             
 
             //! Go to Home Page Pame Stoi
-            IWebDriver driver1 = new ChromeDriver(@"C:\Users\g.stavrou\Source\Repos\HtmlParserProgram\HtmlParserProgram\bin\Debug\netcoreapp2.1");
+            IWebDriver driver1 = new ChromeDriver(@"C:\Users\Mpoumpos\Source\Repos\HtmlParsing\HtmlParserProgram\bin\Debug\netcoreapp2.1");
             
             PameStoixima pameStoixima = new PameStoixima("https://www.pamestoixima.gr/EN/1/sports#action=sports", driver1);
             string companyUrl = string.Empty;
