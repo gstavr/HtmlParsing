@@ -146,9 +146,10 @@ namespace HtmlParserProgram
                                                 using (OddsContext context = new OddsContext())
                                                 {
 
-                                                    Competition competition = context.Competition.FirstOrDefault(x => x.Descr.Equals(childNode3.InnerText));
+                                                    //Competition competition = context.Competition.FirstOrDefault(x => x.Descr.Equals(childNode3.InnerText));
+                                                    Competition competition = context.Competition.FirstOrDefault(x => x.DynamicId.Equals(nodeAttributeCollection["behavior.gotoleague.idfwbonavigation"].Value));
 
-                                                    if(competition == default(Competition))
+                                                    if (competition == default(Competition))
                                                     {
                                                         competition = new Competition();
                                                         context.Competition.Add(competition);
@@ -158,7 +159,6 @@ namespace HtmlParserProgram
                                                     }
 
                                                     competition.DateUpdated = DateTime.Now;
-                                                    competition.IsValid = 1;
                                                     competition.SportId = 1;
                                                     competition.Descr = childNode3.InnerText;
                                                     competition.DynamicId = nodeAttributeCollection["behavior.gotoleague.idfwbonavigation"].Value;
@@ -185,7 +185,7 @@ namespace HtmlParserProgram
             using (OddsContext context = new OddsContext())
             {
 
-                List<Competition> companyFootball = context.Competition.Where(x => x.IsValid == 1 && x.DateUpdated > DateTime.Now.AddHours(-2)).ToList();
+                List<Competition> companyFootball = context.Competition.ToList();
 
                 string CompetitionURL = this.driver1.Url;
                 foreach (Competition comp in companyFootball)
@@ -195,6 +195,8 @@ namespace HtmlParserProgram
                     if (!string.IsNullOrWhiteSpace(comp.DynamicId))
                     {
                         IWebElement liList = driver1.FindElement(By.XPath(string.Format("//span[contains(@behavior.gotoleague.idfwbonavigation, '{0}')]", comp.DynamicId)));
+                        if (liList == default(IWebElement))
+                            continue;
                         liList.Click();
                         //string gameURl = string.Format(CompetitionURL + "&dynamic={0}", comp.DynamicId);
                         //this.driver1.Navigate().GoToUrl(this.url);
@@ -249,11 +251,26 @@ namespace HtmlParserProgram
                                                             game.Descr = string.Format("{0} - {1}", MatchHomeTeam, AwayTeam);
                                                             game.HomeTeam = MatchHomeTeam;
                                                             game.AwayTeam = AwayTeam;
-                                                            game.MatchDate = new DateTime(DateTime.Now.Year, Convert.ToInt32(date.Split('/')[1]), Convert.ToInt32(date.Split('/')[0]), Convert.ToInt32(time.Split(':')[0]), Convert.ToInt32(time.Split(':')[1]), 0);
+
+                                                            if (time.Contains("mins"))
+                                                            {   
+                                                                game.MatchDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, (DateTime.Now.Hour + 1 ), 0, 0);
+                                                            }
+                                                            else
+                                                            {
+                                                                game.MatchDate = new DateTime(DateTime.Now.Year, Convert.ToInt32(date.Split('/')[1]), Convert.ToInt32(date.Split('/')[0]), Convert.ToInt32(time.Split(':')[0]), Convert.ToInt32(time.Split(':')[1]), 0);
+                                                            }
+                                                            
                                                         }
                                                     }
 
-                                                    Game checkIfGameExists = context.Game.FirstOrDefault(x => x.CompetitionId == game.CompetitionId && x.MatchDate == game.MatchDate && x.HomeTeam.Equals(game.HomeTeam) && x.AwayTeam.Equals(game.AwayTeam));
+                                                    string behaviorID = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Value;
+                                                    string behaviorName = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Name;
+
+                                                    game.DynamicId = behaviorID;
+
+                                                    //Game checkIfGameExists = context.Game.FirstOrDefault(x => x.CompetitionId == game.CompetitionId && x.MatchDate == game.MatchDate && x.HomeTeam.Equals(game.HomeTeam) && x.AwayTeam.Equals(game.AwayTeam));
+                                                    Game checkIfGameExists = context.Game.FirstOrDefault(x => x.CompetitionId == game.CompetitionId && x.DynamicId == behaviorID);
                                                     if (checkIfGameExists == default(Game))
                                                     {
                                                         game.Id = _dataBase.X_getGID("Game");
@@ -261,13 +278,10 @@ namespace HtmlParserProgram
                                                     }
                                                     else
                                                     {
-                                                        checkIfGameExists = game;
+                                                        game.Id = checkIfGameExists.Id;
                                                     }
 
-                                                    string behaviorID = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Value;
-                                                    string behaviorName = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Name;
-
-                                                    game.DynamicId = behaviorID;
+                                                    
                                                     context.SaveChanges();
 
                                                     IWebElement moreBetsPage = driver1.FindElement(By.XPath(string.Format("//span[@{1}='{0}' and @behavior.id ='More' and @title='More bets']", behaviorID, behaviorName)));
@@ -314,18 +328,70 @@ namespace HtmlParserProgram
                         {
                             if(gamePick.ChildNodes[0].ChildNodes.Count > 0)
                             {
-                                // Foreach \"market\" class 
-                                foreach (HtmlNode market in gamePick.ChildNodes[0].ChildNodes)
+                                using (OddsContext context = new OddsContext())
                                 {
-                                    HtmlNode lastNode = findLastChildNode(market);
-                                    if (market.Name.Equals("h2"))
-                                    {
-                                        string GamePickDescr = market.FirstChild.InnerText;
+                                    GamePick gamePickRecord = new GamePick();
+                                    // Foreach \"market\" class 
+                                    foreach (HtmlNode market in gamePick.ChildNodes[0].ChildNodes)
+                                    {   
+                                        //HtmlNode lastNode = findLastChildNode(market);
+                                        if (market.Name.Equals("h2"))
+                                        {
+                                            string GamePickDescr = market.FirstChild.InnerText;
+                                            gamePickRecord = context.GamePick.FirstOrDefault(x => x.GameId == game.Id && x.Descr.Equals(GamePickDescr));
+                                            if(gamePickRecord == default(GamePick))
+                                            {
+                                                gamePickRecord = new GamePick();
+                                                context.GamePick.Add(gamePickRecord);
+                                                gamePickRecord.Id = _dataBase.X_getGID("GamePick");
+                                                gamePickRecord.GameId = game.Id;
+                                            }                                            
+                                                                                       
+                                            
+                                            gamePickRecord.Descr = GamePickDescr;
+                                            gamePickRecord.OddSumNum = 0;
+
+                                            context.SaveChanges();
+                                        }
+
+
+                                        if (market.Name.Equals("table"))
+                                        {
+                                            foreach (HtmlNode tableNode in market.FirstChild.ChildNodes)
+                                            {
+                                                foreach (HtmlNode trNode in tableNode.ChildNodes)
+                                                {
+                                                    foreach (HtmlNode tdNode in trNode.FirstChild.ChildNodes)
+                                                    {
+                                                        gamePickRecord.OddSumNum++;
+                                                        // Left Td String Value
+
+                                                        string leftTd = tdNode.FirstChild.FirstChild.InnerText;
+                                                        string rightTd = tdNode.FirstChild.LastChild.InnerText;
+                                                        GamePickValue gamePickValue = context.GamePickValue.FirstOrDefault(x => x.Descr.Equals(leftTd));
+                                                                                                              
+                                                        
+                                                        if (gamePickValue == default(GamePickValue))
+                                                        {
+                                                            gamePickValue = new GamePickValue();
+                                                            context.GamePickValue.Add(gamePickValue);
+                                                            gamePickValue.Id = _dataBase.X_getGID("GamePickValue");
+                                                            gamePickValue.PickValue = Convert.ToDouble(rightTd.Replace(',', '.'));
+                                                        }
+                                                        else
+                                                        {
+                                                            gamePickValue.ChangedValue = Convert.ToDouble(rightTd.Replace(',', '.'));
+                                                        }
+                                                        gamePickValue.Descr = gamePickValue.AlternativeDescr = leftTd;
+                                                        gamePickValue.OddsUpdated = DateTime.Now;
+                                                        gamePickValue.GamePickId = gamePickRecord.Id;
+                                                        gamePickValue.CompanyId = 1;
+                                                        context.SaveChanges();
+                                                    }
+                                                }
+                                            }
+                                        }                                        
                                     }
-
-                                    if (market.Name.Equals("table")) ;
-
-                                    //string te = market.InnerHtml;
                                 }
                             }
                         }
@@ -338,21 +404,16 @@ namespace HtmlParserProgram
 
         private HtmlNode findLastChildNode(HtmlNode node)
         {
-            HtmlNode returnedNode = null;
 
-            if(node.ChildNodes.Count > 0)
+            if(node.ChildNodes.Count > 0 )
             {
                 foreach(HtmlNode nodeInner in node.ChildNodes)
                 {
-                    findLastChildNode(nodeInner);
+                    return findLastChildNode(nodeInner);
                 }
             }
-            else
-            {
-                returnedNode = node;
-            }
-
-            return returnedNode;
+            
+            return node;
         }
 
     }

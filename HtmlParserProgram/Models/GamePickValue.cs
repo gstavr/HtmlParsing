@@ -12,6 +12,7 @@ namespace HtmlParserProgram.Models
         public string AlternativeDescr { get; set; }
         public double? PickValue { get; set; }
         public DateTime? OddsUpdated { get; set; }
+        public double? ChangedValue { get; set; }
 
         public Companies Company { get; set; }
         public GamePick GamePick { get; set; }
