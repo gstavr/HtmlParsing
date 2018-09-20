@@ -31,6 +31,9 @@ namespace HtmlParserProgram
         public IWebDriver driver1 = null;
         public GeneralMethods generalMethods = new GeneralMethods();
         public DataBase _dataBase = new DataBase();
+
+        public HtmlNodeCollection htmlNodeCollection = null;
+
         public PameStoixima(string _pageUrl , IWebDriver _driver1)
         {
             this.url = _pageUrl;
@@ -48,14 +51,13 @@ namespace HtmlParserProgram
             //! Get HTML Code
             string pageSource = this.driver1.PageSource;
 
-            pageSource = pageSource.Replace(System.Environment.NewLine, "").Replace("\t","");
+            pageSource = pageSource.Replace(Environment.NewLine, "").Replace("\t","");
             string getID = string.Empty;
             //! Parse HTML
             HttpClient client = new HttpClient();
             HtmlDocument pageDocument = new HtmlDocument();
             pageDocument = generalMethods.ParseHtmlPageSource(pageSource);
-            HtmlNodeCollection htmlNodeCollection = null;
-            
+                        
             while(htmlNodeCollection == null)
             {
                 htmlNodeCollection = generalMethods.FindSpecificElements(pageDocument, "(//ul[contains(@class,'nodes')])");
@@ -164,6 +166,8 @@ namespace HtmlParserProgram
                                                     competition.DynamicId = nodeAttributeCollection["behavior.gotoleague.idfwbonavigation"].Value;
                                                     
                                                     context.SaveChanges();
+
+                                                    competitionGames(competition);
                                                 }
                                             }
                                         }
@@ -182,126 +186,134 @@ namespace HtmlParserProgram
             //! Fill For Each Competition the Games
             
             
+            
+        }
+
+        private void competitionGames(Competition competition)
+        {
             using (OddsContext context = new OddsContext())
             {
 
-                List<Competition> companyFootball = context.Competition.ToList();
-
-                string CompetitionURL = this.driver1.Url;
-                foreach (Competition comp in companyFootball)
+                //generalMethods.setTimeOut(2);
+                //! Go to Game URL (DYNAMIC)
+                if (competition != default(Competition) && !string.IsNullOrWhiteSpace(competition.DynamicId))
                 {
-                    //generalMethods.setTimeOut(2);
-                    //! Go to Game URL (DYNAMIC)
-                    if (!string.IsNullOrWhiteSpace(comp.DynamicId))
+
+                    
+                    IWebElement liList = driver1.FindElement(By.XPath(string.Format("//span[contains(@behavior.gotoleague.idfwbonavigation, '{0}')]", competition.DynamicId)));
+                    while (liList == null)
                     {
-                        IWebElement liList = driver1.FindElement(By.XPath(string.Format("//span[contains(@behavior.gotoleague.idfwbonavigation, '{0}')]", comp.DynamicId)));
-                        if (liList == default(IWebElement))
-                            continue;
-                        liList.Click();
-                        //string gameURl = string.Format(CompetitionURL + "&dynamic={0}", comp.DynamicId);
-                        //this.driver1.Navigate().GoToUrl(this.url);
-                        //generalMethods.setTimeOut(2);
+                        liList = driver1.FindElement(By.XPath(string.Format("//span[contains(@behavior.gotoleague.idfwbonavigation, '{0}')]", competition.DynamicId)));
+                    }
 
-                        htmlNodeCollection = null;
-                        while(htmlNodeCollection == null)
-                        {
-                            string pgData = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");
-                            htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pgData), "(//div[contains(@id,'DynamicContentComponent31-groups')])");
-                        }
+                    liList.Click();                   
 
-                        runningNode = null;
-                        HtmlDocument pageDocumentTable = new HtmlDocument();
-                        HtmlNodeCollection htmlNodeCollection1 = null;
-                        while(htmlNodeCollection1 == null)
-                        {
-                            pageDocumentTable = generalMethods.ParseHtmlPageSource(htmlNodeCollection[0].OuterHtml);
-                            htmlNodeCollection1 = generalMethods.FindSpecificElements(pageDocumentTable, "(//table)");
-                        }
+                    htmlNodeCollection = null;
+                    int counter = 0;
+                    while (htmlNodeCollection == null)
+                    {
+                        string pgData = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");
+                        htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pgData), "(//div[contains(@id,'DynamicContentComponent31-groups')])");
+                        if(counter > 1000)
+                            return;
+                    }
 
-                        foreach(HtmlNode collection in htmlNodeCollection1)
+                    HtmlDocument pageDocumentTable = new HtmlDocument();
+                    HtmlNodeCollection htmlNodeCollection1 = null;
+                    while (htmlNodeCollection1 == null)
+                    {
+                        pageDocumentTable = generalMethods.ParseHtmlPageSource(htmlNodeCollection[0].OuterHtml);
+                        htmlNodeCollection1 = generalMethods.FindSpecificElements(pageDocumentTable, "(//table)");
+                    }
+
+                    foreach (HtmlNode collection in htmlNodeCollection1)
+                    {
+                        if (collection.ChildNodes.Count > 0)
                         {
-                            if(collection.ChildNodes.Count > 0)
+                            foreach (HtmlNode childNode in collection.ChildNodes)
                             {
-                                foreach(HtmlNode childNode in collection.ChildNodes)
+                                if (childNode.Name.Equals("tbody"))
                                 {
-                                    if(childNode.Name.Equals("tbody"))
+
+                                    if (childNode.ChildNodes.Count > 0)
                                     {
-
-                                        if(childNode.ChildNodes.Count > 0)
+                                        foreach (HtmlNode tr in childNode.ChildNodes)
                                         {
-                                            foreach(HtmlNode tr in childNode.ChildNodes)
+                                            // For Every Tr in tbody
+                                            if (tr.Name.Equals("tr") && tr.ChildNodes.Count > 0)
                                             {
-                                                // For Every Tr in tbody
-                                                if (tr.Name.Equals("tr") && tr.ChildNodes.Count > 0)
+
+                                                Game game = new Game();
+                                                game.CompetitionId = competition.Id;
+                                                game.DateUpdated = DateTime.Now;
+                                                foreach (HtmlNode td in tr.ChildNodes)
                                                 {
-
-                                                    Game game = new Game();
-                                                    game.CompetitionId = comp.Id;
-                                                    game.DateUpdated = DateTime.Now;
-                                                    foreach (HtmlNode td in tr.ChildNodes)
+                                                    if (td.HasClass("eventname"))
                                                     {
-                                                        if (td.HasClass("eventname"))
+                                                        string date = td.FirstChild.FirstChild.FirstChild.InnerText;
+                                                        string time = td.FirstChild.FirstChild.LastChild.InnerText;
+
+                                                        string MatchHomeTeam = td.LastChild.FirstChild.FirstChild.InnerText;
+                                                        string AwayTeam = td.LastChild.LastChild.LastChild.InnerText;
+
+                                                        game.Descr = string.Format("{0} - {1}", MatchHomeTeam, AwayTeam);
+                                                        game.HomeTeam = MatchHomeTeam;
+                                                        game.AwayTeam = AwayTeam;
+
+                                                        if (time.Contains("mins"))
                                                         {
-                                                            string date = td.FirstChild.FirstChild.FirstChild.InnerText;
-                                                            string time = td.FirstChild.FirstChild.LastChild.InnerText;
-
-                                                            string MatchHomeTeam = td.LastChild.FirstChild.FirstChild.InnerText;
-                                                            string AwayTeam = td.LastChild.LastChild.LastChild.InnerText;
-
-                                                            game.Descr = string.Format("{0} - {1}", MatchHomeTeam, AwayTeam);
-                                                            game.HomeTeam = MatchHomeTeam;
-                                                            game.AwayTeam = AwayTeam;
-
-                                                            if (time.Contains("mins"))
-                                                            {   
-                                                                game.MatchDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, (DateTime.Now.Hour + 1 ), 0, 0);
-                                                            }
-                                                            else
-                                                            {
-                                                                game.MatchDate = new DateTime(DateTime.Now.Year, Convert.ToInt32(date.Split('/')[1]), Convert.ToInt32(date.Split('/')[0]), Convert.ToInt32(time.Split(':')[0]), Convert.ToInt32(time.Split(':')[1]), 0);
-                                                            }
-                                                            
+                                                            game.MatchDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, (DateTime.Now.Hour + 1), 0, 0);
                                                         }
+                                                        else
+                                                        {
+                                                            game.MatchDate = new DateTime(DateTime.Now.Year, Convert.ToInt32(date.Split('/')[1]), Convert.ToInt32(date.Split('/')[0]), Convert.ToInt32(time.Split(':')[0]), Convert.ToInt32(time.Split(':')[1]), 0);
+                                                        }
+
                                                     }
-
-                                                    string behaviorID = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Value;
-                                                    string behaviorName = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Name;
-
-                                                    game.DynamicId = behaviorID;
-
-                                                    //Game checkIfGameExists = context.Game.FirstOrDefault(x => x.CompetitionId == game.CompetitionId && x.MatchDate == game.MatchDate && x.HomeTeam.Equals(game.HomeTeam) && x.AwayTeam.Equals(game.AwayTeam));
-                                                    Game checkIfGameExists = context.Game.FirstOrDefault(x => x.CompetitionId == game.CompetitionId && x.DynamicId == behaviorID);
-                                                    if (checkIfGameExists == default(Game))
-                                                    {
-                                                        game.Id = _dataBase.X_getGID("Game");
-                                                        context.Game.Add(game);
-                                                    }
-                                                    else
-                                                    {
-                                                        game.Id = checkIfGameExists.Id;
-                                                    }
-
-                                                    
-                                                    context.SaveChanges();
-
-                                                    IWebElement moreBetsPage = driver1.FindElement(By.XPath(string.Format("//span[@{1}='{0}' and @behavior.id ='More' and @title='More bets']", behaviorID, behaviorName)));
-                                                    moreBetsPage.Click();
-                                                    
-                                                    Fill_GamePick(moreBetsPage, game);
-
-                                                    driver1.Navigate().Back();
                                                 }
+
+                                                string behaviorID = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Value;
+                                                string behaviorName = tr.LastChild.FirstChild.Attributes["behavior.more.id"].Name;
+
+                                                game.DynamicId = behaviorID;
+
+                                                //Game checkIfGameExists = context.Game.FirstOrDefault(x => x.CompetitionId == game.CompetitionId && x.MatchDate == game.MatchDate && x.HomeTeam.Equals(game.HomeTeam) && x.AwayTeam.Equals(game.AwayTeam));
+                                                Game checkIfGameExists = context.Game.FirstOrDefault(x => x.CompetitionId == game.CompetitionId && x.DynamicId == behaviorID);
+                                                if (checkIfGameExists == default(Game))
+                                                {
+                                                    game.Id = _dataBase.X_getGID("Game");
+                                                    context.Game.Add(game);
+                                                }
+                                                else
+                                                {
+                                                    game.Id = checkIfGameExists.Id;
+                                                }
+
+
+                                                context.SaveChanges();
+
+                                                IWebElement moreBetsPage = driver1.FindElement(By.XPath(string.Format("//span[@{1}='{0}' and @behavior.id ='More' and @title='More bets']", behaviorID, behaviorName)));
+                                                while(moreBetsPage == null)
+                                                {
+                                                    moreBetsPage = driver1.FindElement(By.XPath(string.Format("//span[@{1}='{0}' and @behavior.id ='More' and @title='More bets']", behaviorID, behaviorName)));
+                                                }
+
+                                                moreBetsPage.Click();
+
+                                                Fill_GamePick(moreBetsPage, game);
+
+                                                driver1.Navigate().Back();
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-
-                        driver1.Navigate().Back();
                     }
-                }
-                context.SaveChanges();
+                    context.SaveChanges();
+                    driver1.Navigate().Back();
+                }                             
+                
             }
         }
 
@@ -368,7 +380,7 @@ namespace HtmlParserProgram
 
                                                         string leftTd = tdNode.FirstChild.FirstChild.InnerText;
                                                         string rightTd = tdNode.FirstChild.LastChild.InnerText;
-                                                        GamePickValue gamePickValue = context.GamePickValue.FirstOrDefault(x => x.Descr.Equals(leftTd));
+                                                        GamePickValue gamePickValue = context.GamePickValue.FirstOrDefault(x => x.Descr.Equals(leftTd) && x.GamePickId == gamePickRecord.Id);
                                                                                                               
                                                         
                                                         if (gamePickValue == default(GamePickValue))
@@ -401,6 +413,9 @@ namespace HtmlParserProgram
                 }
             }
         }
+
+        
+
 
         private HtmlNode findLastChildNode(HtmlNode node)
         {
