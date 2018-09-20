@@ -66,8 +66,7 @@ namespace HtmlParserProgram
             //! Find FootBall Tab From HomePage
             foreach (HtmlNode node in htmlNodeCollection)
             {
-                Console.WriteLine(generalMethods.IterateThroughHtmlNodes(node));
-
+                
                 if (node.ChildNodes.Count > 0)
                 {
                     foreach (HtmlNode childNode in node.ChildNodes)
@@ -98,8 +97,7 @@ namespace HtmlParserProgram
                             //! Find Football Link and Get ID
                             HtmlAttributeCollection nodeAttributeCollection = childNode.Attributes;
                             foreach (HtmlAttribute attribute in nodeAttributeCollection)
-                            {
-                                Console.WriteLine(childNode.InnerHtml);
+                            {                                
                                 if (attribute.Name.Equals("id") && attribute.Value.Contains("DynamicRootComponent"))
                                 {   
                                     IWebElement li = driver1.FindElement(By.Id(attribute.Value));
@@ -300,7 +298,14 @@ namespace HtmlParserProgram
 
                                                 moreBetsPage.Click();
 
+                                                generalMethods.setTimeOut(2);
                                                 Fill_GamePick(moreBetsPage, game);
+
+                                                List<GamePick> gamePickRecord = context.GamePick.Where(x => x.GameId == game.Id).ToList();
+                                                if(gamePickRecord.Count == 10)
+                                                {
+                                                    Console.WriteLine($"Game {game.Descr} has all records");
+                                                }
 
                                                 driver1.Navigate().Back();
                                             }
@@ -331,7 +336,7 @@ namespace HtmlParserProgram
             {
                 if(htmlNodeCollection[0].ChildNodes.Count > 0 && htmlNodeCollection[0].ChildNodes.Count == 1)
                 {
-
+                    //behavior.id="ToggleMarket"
                     // \"toggler\" 
                     foreach (HtmlNode gamePick in htmlNodeCollection[0].ChildNodes[0].ChildNodes)
                     {
@@ -357,9 +362,8 @@ namespace HtmlParserProgram
                                                 context.GamePick.Add(gamePickRecord);
                                                 gamePickRecord.Id = _dataBase.X_getGID("GamePick");
                                                 gamePickRecord.GameId = game.Id;
-                                            }                                            
-                                                                                       
-                                            
+                                            }                                         
+                                           
                                             gamePickRecord.Descr = GamePickDescr;
                                             gamePickRecord.OddSumNum = 0;
 
@@ -373,33 +377,37 @@ namespace HtmlParserProgram
                                             {
                                                 foreach (HtmlNode trNode in tableNode.ChildNodes)
                                                 {
-                                                    foreach (HtmlNode tdNode in trNode.FirstChild.ChildNodes)
+                                                    if(trNode.ChildNodes.Count > 0)
                                                     {
-                                                        gamePickRecord.OddSumNum++;
-                                                        // Left Td String Value
+                                                        foreach (HtmlNode tdNode in trNode.FirstChild.ChildNodes)
+                                                        {
+                                                            gamePickRecord.OddSumNum++;
+                                                            // Left Td String Value
 
-                                                        string leftTd = tdNode.FirstChild.FirstChild.InnerText;
-                                                        string rightTd = tdNode.FirstChild.LastChild.InnerText;
-                                                        GamePickValue gamePickValue = context.GamePickValue.FirstOrDefault(x => x.Descr.Equals(leftTd) && x.GamePickId == gamePickRecord.Id);
-                                                                                                              
-                                                        
-                                                        if (gamePickValue == default(GamePickValue))
-                                                        {
-                                                            gamePickValue = new GamePickValue();
-                                                            context.GamePickValue.Add(gamePickValue);
-                                                            gamePickValue.Id = _dataBase.X_getGID("GamePickValue");
-                                                            gamePickValue.PickValue = Convert.ToDouble(rightTd.Replace(',', '.'));
+                                                            string leftTd = tdNode.FirstChild.FirstChild.InnerText;
+                                                            string rightTd = tdNode.FirstChild.LastChild.InnerText;
+                                                            GamePickValue gamePickValue = context.GamePickValue.FirstOrDefault(x => x.Descr.Equals(leftTd) && x.GamePickId == gamePickRecord.Id);
+
+
+                                                            if (gamePickValue == default(GamePickValue))
+                                                            {
+                                                                gamePickValue = new GamePickValue();
+                                                                context.GamePickValue.Add(gamePickValue);
+                                                                gamePickValue.Id = _dataBase.X_getGID("GamePickValue");
+                                                                gamePickValue.PickValue = Convert.ToDouble(rightTd.Replace(',', '.'));
+                                                            }
+                                                            else
+                                                            {
+                                                                gamePickValue.ChangedValue = Convert.ToDouble(rightTd.Replace(',', '.'));
+                                                            }
+                                                            gamePickValue.Descr = gamePickValue.AlternativeDescr = leftTd;
+                                                            gamePickValue.OddsUpdated = DateTime.Now;
+                                                            gamePickValue.GamePickId = gamePickRecord.Id;
+                                                            gamePickValue.CompanyId = 1;
+                                                            context.SaveChanges();
                                                         }
-                                                        else
-                                                        {
-                                                            gamePickValue.ChangedValue = Convert.ToDouble(rightTd.Replace(',', '.'));
-                                                        }
-                                                        gamePickValue.Descr = gamePickValue.AlternativeDescr = leftTd;
-                                                        gamePickValue.OddsUpdated = DateTime.Now;
-                                                        gamePickValue.GamePickId = gamePickRecord.Id;
-                                                        gamePickValue.CompanyId = 1;
-                                                        context.SaveChanges();
                                                     }
+                                                    
                                                 }
                                             }
                                         }                                        
