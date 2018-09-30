@@ -20,6 +20,7 @@ using System.Data;
 using HtmlParserProgram.Models;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using OpenQA.Selenium.Support.UI;
 
 namespace HtmlParserProgram
 {
@@ -196,9 +197,13 @@ namespace HtmlParserProgram
                 //! Go to Game URL (DYNAMIC)
                 if (competition != default(Competition) && !string.IsNullOrWhiteSpace(competition.DynamicId))
                 {
-
+                    IWebElement liList = default(IWebElement);
                     
-                    IWebElement liList = driver1.FindElement(By.XPath(string.Format("//span[contains(@behavior.gotoleague.idfwbonavigation, '{0}')]", competition.DynamicId)));
+                    findElement(string.Format("//span[contains(@behavior.gotoleague.idfwbonavigation, '{0}')]", competition.DynamicId) , 0);
+                    //WebDriverWait waitForElement = new WebDriverWait(driver1, TimeSpan.FromSeconds(5));
+                    //waitForElement.Until(ExpectedConditions.ElementIsVisible(By.XPath(string.Format("//span[contains(@behavior.gotoleague.idfwbonavigation, '{0}')]", competition.DynamicId))));
+
+
                     while (liList == null)
                     {
                         liList = driver1.FindElement(By.XPath(string.Format("//span[contains(@behavior.gotoleague.idfwbonavigation, '{0}')]", competition.DynamicId)));
@@ -299,13 +304,7 @@ namespace HtmlParserProgram
                                                 moreBetsPage.Click();
 
                                                 generalMethods.setTimeOut(2);
-                                                Fill_GamePick(moreBetsPage, game);
-
-                                                List<GamePick> gamePickRecord = context.GamePick.Where(x => x.GameId == game.Id).ToList();
-                                                if(gamePickRecord.Count == 10)
-                                                {
-                                                    Console.WriteLine($"Game {game.Descr} has all records");
-                                                }
+                                                Fill_GamePick(moreBetsPage, game);                                                                                              
 
                                                 driver1.Navigate().Back();
                                             }
@@ -325,8 +324,8 @@ namespace HtmlParserProgram
         private void Fill_GamePick(IWebElement moreBetsPage, Game game)
         {   
             HtmlNodeCollection htmlNodeCollection = null;
-
-            while(htmlNodeCollection == null)
+            int countDiv = 0;
+            while (htmlNodeCollection == null)
             {
                 string pgData = this.driver1.PageSource.Replace(System.Environment.NewLine, "").Replace("\t", "");
                 htmlNodeCollection = generalMethods.FindSpecificElements(generalMethods.ParseHtmlPageSource(pgData), string.Format("(//div[@id='MarketListContentComponent32-event-{0}-group-1'])", game.DynamicId));
@@ -336,6 +335,7 @@ namespace HtmlParserProgram
             {
                 if(htmlNodeCollection[0].ChildNodes.Count > 0 && htmlNodeCollection[0].ChildNodes.Count == 1)
                 {
+                    countDiv = htmlNodeCollection[0].ChildNodes[0].ChildNodes.Count;
                     //behavior.id="ToggleMarket"
                     // \"toggler\" 
                     foreach (HtmlNode gamePick in htmlNodeCollection[0].ChildNodes[0].ChildNodes)
@@ -420,9 +420,47 @@ namespace HtmlParserProgram
                     }
                 }
             }
+
+            using (OddsContext context = new OddsContext())
+            {
+                List<GamePick> gamePickRecord = context.GamePick.Where(x => x.GameId == game.Id).ToList();
+                if (gamePickRecord.Count == countDiv)
+                {
+                    Console.WriteLine($"Game {game.Descr} has all records");
+                }
+            }
+            
         }
 
-        
+        private IWebElement findElement(string xPath , int counter)
+        {
+            IWebElement liList = default(IWebElement);
+            int _counter = counter;
+            try
+            {   
+                liList = driver1.FindElement(By.XPath(xPath));
+            }
+            catch (Exception ex)
+            {
+                if(_counter < 3)
+                {
+                    generalMethods.setTimeOut(2);
+                    findElement(xPath , ++_counter);
+                }
+                else
+                {
+                    generalMethods.setTimeOut(2);
+                    liList = driver1.FindElement(By.XPath("(//span[contains(@id,'DynamicContentComponent31-tab-menu')])"));
+                    liList.Click();                    
+                    generalMethods.setTimeOut(5);
+                    findElement(xPath,0);
+                }
+               
+                
+            }
+
+            return liList;
+        }
 
 
         private HtmlNode findLastChildNode(HtmlNode node)
