@@ -19,8 +19,8 @@ namespace HtmlParserProgram.Models
         public DateTime? DateUpdated { get; set; }
         public short? IsValid { get; set; }
 
-        public GroupCompetition Group { get; set; }
-        public Sport Sport { get; set; }
-        public ICollection<Game> Game { get; set; }
+        public virtual GroupCompetition Group { get; set; }
+        public virtual Sport Sport { get; set; }
+        public virtual ICollection<Game> Game { get; set; }
     }
 }

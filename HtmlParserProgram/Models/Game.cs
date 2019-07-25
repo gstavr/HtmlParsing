@@ -19,7 +19,7 @@ namespace HtmlParserProgram.Models
         public string DynamicId { get; set; }
         public DateTime? DateUpdated { get; set; }
 
-        public Competition Competition { get; set; }
-        public ICollection<GamePick> GamePick { get; set; }
+        public virtual Competition Competition { get; set; }
+        public virtual ICollection<GamePick> GamePick { get; set; }
     }
 }

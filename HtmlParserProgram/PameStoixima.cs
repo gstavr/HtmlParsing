@@ -398,7 +398,7 @@ namespace HtmlParserProgram
                                                             }
                                                             else
                                                             {
-                                                                gamePickValue.ChangedValue = Convert.ToDouble(rightTd.Replace(',', '.'));
+                                                                //gamePickValue.ChangedValue = Convert.ToDouble(rightTd.Replace(',', '.'));
                                                             }
                                                             gamePickValue.Descr = gamePickValue.AlternativeDescr = leftTd;
                                                             gamePickValue.OddsUpdated = DateTime.Now;

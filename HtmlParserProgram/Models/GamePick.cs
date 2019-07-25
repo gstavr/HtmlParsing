@@ -17,8 +17,8 @@ namespace HtmlParserProgram.Models
         public int? OddSumNum { get; set; }
         public int? HasCashout { get; set; }
 
-        public Game Game { get; set; }
-        public ICollection<GamePickValue> GamePickValue { get; set; }
-        public ICollection<GamePickValueLog> GamePickValueLog { get; set; }
+        public virtual Game Game { get; set; }
+        public virtual ICollection<GamePickValue> GamePickValue { get; set; }
+        public virtual ICollection<GamePickValueLog> GamePickValueLog { get; set; }
     }
 }

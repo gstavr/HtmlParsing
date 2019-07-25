@@ -17,7 +17,7 @@ namespace HtmlParserProgram.Models
         public string DynamicParam { get; set; }
         public int? IsActive { get; set; }
 
-        public ICollection<GamePickValue> GamePickValue { get; set; }
-        public ICollection<GamePickValueLog> GamePickValueLog { get; set; }
+        public virtual ICollection<GamePickValue> GamePickValue { get; set; }
+        public virtual ICollection<GamePickValueLog> GamePickValueLog { get; set; }
     }
 }

@@ -14,6 +14,6 @@ namespace HtmlParserProgram.Models
         public string Descr { get; set; }
         public string AlternativeDescr { get; set; }
 
-        public ICollection<Competition> Competition { get; set; }
+        public virtual ICollection<Competition> Competition { get; set; }
     }
 }

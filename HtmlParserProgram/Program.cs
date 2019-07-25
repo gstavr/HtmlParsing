@@ -25,15 +25,25 @@ namespace HtmlParserProgram
 
             //WebClient client1 = new WebClient();
             //client1.DownloadFile("http://www.nzherald.co.nz/", "C://Users//g.stavrou//Downloads//tes111t.html");
-            
-            
+            IWebDriver driverTest = new ChromeDriver(@"C:\Users\g.stavrou\source\repos\HtmlParserProgram\HtmlParserProgram\bin\Debug\netcoreapp2.1");
+            driverTest.Navigate().GoToUrl("https://www.pamestoixima.gr/desktop/home");
+
+
+
+
 
             //! Go to Home Page Pame Stoi
-            IWebDriver driver1 = new ChromeDriver(@"C:\Users\Mpoumpos\Source\Repos\HtmlParsing\HtmlParserProgram\bin\Debug\netcoreapp2.1");
+            //IWebDriver driver1 = new ChromeDriver(@"C:\Users\g.stavrou\source\repos\HtmlParserProgram\HtmlParserProgram\bin\Debug\netcoreapp2.1");
             
-            PameStoixima pameStoixima = new PameStoixima("https://www.pamestoixima.gr/desktop/home", driver1);
-            string companyUrl = string.Empty;
-            DataBase cmp = new DataBase();
+            //PameStoixima pameStoixima = new PameStoixima("https://www.pamestoixima.gr/desktop/home", driver1);
+            //string companyUrl = string.Empty;
+
+
+
+
+
+
+            //DataBase cmp = new DataBase();
 
             //foreach (DataRow row in cmp.companiesDataTable.Rows)
             //{

@@ -14,7 +14,7 @@ namespace HtmlParserProgram.Models
         public double? PreviousPickValue { get; set; }
         public DateTime? OddsUpdated { get; set; }
 
-        public Companies Company { get; set; }
-        public GamePick GamePick { get; set; }
+        public virtual Companies Company { get; set; }
+        public virtual GamePick GamePick { get; set; }
     }
 }

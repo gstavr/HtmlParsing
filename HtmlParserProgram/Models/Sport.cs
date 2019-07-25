@@ -13,6 +13,6 @@ namespace HtmlParserProgram.Models
         public int Id { get; set; }
         public string Descr { get; set; }
 
-        public ICollection<Competition> Competition { get; set; }
+        public virtual ICollection<Competition> Competition { get; set; }
     }
 }
