@@ -11,8 +11,8 @@ namespace HtmlParserProgram
         // Scaffold-DbContext "Server=DEV-STAVROU\SQLEXPRESS;Database=Odds;Trusted_Connection=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models -f
         //Scaffold-DbContext "Server=GINOS\SQLEXPRESS03;Database=Odds;Trusted_Connection=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models -f
         public DataTable companiesDataTable = new DataTable();
-        //public string _connString = string.Format("Data Source=DEV-STAVROU\\SQLEXPRESS;Initial Catalog=Odds;Integrated Security=True;MultipleActiveResultSets=true");// string.Format("Data Source=ANL-PAPASTERGIO; Initial Catalog = Odds; User Id = sa; Password = epsilonsa;");
-        public string _connString = string.Format("Data Source=GINOS\\SQLEXPRESS03;Initial Catalog=Odds;Integrated Security=True;MultipleActiveResultSets=true");// string.Format("Data Source=ANL-PAPASTERGIO; Initial Catalog = Odds; User Id = sa; Password = epsilonsa;");
+        public string _connString = string.Format("Data Source=DEV-STAVROU\\SQLEXPRESS;Initial Catalog=Odds;Integrated Security=True;MultipleActiveResultSets=true");// string.Format("Data Source=ANL-PAPASTERGIO; Initial Catalog = Odds; User Id = sa; Password = epsilonsa;");
+        //public string _connString = string.Format("Data Source=GINOS\\SQLEXPRESS03;Initial Catalog=Odds;Integrated Security=True;MultipleActiveResultSets=true");// string.Format("Data Source=ANL-PAPASTERGIO; Initial Catalog = Odds; User Id = sa; Password = epsilonsa;");
         public DataBase()
         {
             //this._connString = this._connString;

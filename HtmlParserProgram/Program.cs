@@ -31,7 +31,7 @@ namespace HtmlParserProgram
             //! Go to Home Page Pame Stoi
             IWebDriver driver1 = new ChromeDriver(@"C:\Users\Mpoumpos\Source\Repos\HtmlParsing\HtmlParserProgram\bin\Debug\netcoreapp2.1");
             
-            PameStoixima pameStoixima = new PameStoixima("https://www.pamestoixima.gr/EN/1/sports#action=sports", driver1);
+            PameStoixima pameStoixima = new PameStoixima("https://www.pamestoixima.gr/desktop/home", driver1);
             string companyUrl = string.Empty;
             DataBase cmp = new DataBase();
 
