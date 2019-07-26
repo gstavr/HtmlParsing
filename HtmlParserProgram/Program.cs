@@ -14,34 +14,40 @@ using System.Collections.Generic;
 using System.Data;
 using HtmlParserProgram.Models;
 using System.Linq;
+using HtmlParserProgram.Sites;
+
 namespace HtmlParserProgram
 {
     class Program
     {
         static void Main(string[] args)
         {
-
-            //GetData();
-
-            //WebClient client1 = new WebClient();
-            //client1.DownloadFile("http://www.nzherald.co.nz/", "C://Users//g.stavrou//Downloads//tes111t.html");
-            IWebDriver driverTest = new ChromeDriver(@"C:\Users\g.stavrou\source\repos\HtmlParserProgram\HtmlParserProgram\bin\Debug\netcoreapp2.1");
-            driverTest.Navigate().GoToUrl("https://www.pamestoixima.gr/desktop/home");
-
-
-
-
-
             //! Go to Home Page Pame Stoi
-            //IWebDriver driver1 = new ChromeDriver(@"C:\Users\g.stavrou\source\repos\HtmlParserProgram\HtmlParserProgram\bin\Debug\netcoreapp2.1");
+            IWebDriver driver1 = new ChromeDriver(@"C:\Users\g.stavrou\source\repos\HtmlParserProgram\HtmlParserProgram\bin\Debug\netcoreapp2.1");
+            OddsContext dc = new OddsContext();
+
+            List<Companies> companiesSites = dc.Companies.ToList();
+
+            foreach (Companies site in companiesSites)
+            {
+
+                if (site.IsActive.Equals(1) && !string.IsNullOrWhiteSpace(site.Link))
+                {
+                    switch (site.Id)
+                    {
+                        case 1:
+                            new Opap(driver1, site.Link);
+                            break;
+                    }
+                }
+
+
+            }
+
             
-            //PameStoixima pameStoixima = new PameStoixima("https://www.pamestoixima.gr/desktop/home", driver1);
+
+            PameStoixima pameStoixima = new PameStoixima("https://pamestoixima.opap.gr/el/live-kouponi-stoiximatos", driver1);
             //string companyUrl = string.Empty;
-
-
-
-
-
 
             //DataBase cmp = new DataBase();
 
